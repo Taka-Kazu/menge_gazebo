@@ -7,7 +7,7 @@ project(menge_gazebo_plugin)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
 )
-set(MENGE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../../../Menge)
+set(MENGE_ROOT /home/amsl/project/rlslam/menge/Menge)
 set(MENGE_SRC_DIR ${MENGE_ROOT}/src/Menge)
 set(MENGE_EXE_DIR ${MENGE_ROOT}/Exe)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/menge_gazebo_plugin)

@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-set(MENGE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../../../Menge)
+set(MENGE_ROOT /home/amsl/project/rlslam/menge/Menge)
 set(MENGE_SRC_DIR ${MENGE_ROOT}/src/Menge)
 set(MENGE_EXE_DIR ${MENGE_ROOT}/Exe)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)

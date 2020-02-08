@@ -33,7 +33,7 @@
 // Menge Math
 #include "RandGenerator.h"
 //actor
-#include "gazebo/math/Helpers.hh"
+// #include "gazebo/math/Helpers.hh"
 #include "gazebo/transport/TransportTypes.hh"
 #include "gazebo/transport/Node.hh"
 
@@ -110,7 +110,7 @@ void MengePlugin::simLoad() {
 	logger << Logger::INFO_MSG << "initialized logger";
     // The location of the menge root directory
     std::string ROOT("");
-	ROOT.append(getenv("MENGE_ROOT")); 
+	ROOT.append(getenv("MENGE_ROOT"));
 	std::cout<<"root:"<<ROOT<<std::endl;
 
 	static const int argc = 3;
@@ -122,7 +122,7 @@ void MengePlugin::simLoad() {
 	char* buffer=new char[projPath.length()+1];
 	memset(buffer,0,(projPath.length()+1)*sizeof(char));
 	strncpy(buffer, projPath.c_str(), projPath.length());
-	argv[2] =buffer; 
+	argv[2] =buffer;
 
 	PluginEngine plugins(&simDB);
 	std::string pluginPath = os::path::join(2, ROOT.c_str(), "Exe/plugins");
@@ -207,11 +207,11 @@ void MengePlugin::Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf) {
 
 	transport::NodePtr _node(new transport::Node());
 	this -> node = _node;
-	node->Init(this->_world->GetName());
+	node->Init(this->_world->Name());
 	this ->factoryPub = node->Advertise<msgs::Factory>("~/factory");
-	
+
 	insertAgents();
-        _mengeView.start();	
+        _mengeView.start();
 }
 void MengePlugin::controlActor(physics::ActorPtr _actor )
 {
@@ -237,12 +237,12 @@ bool MengePlugin::updateAgent(const Agents::BaseAgent* agt)
   std::stringstream sstm;
   sstm << "MengeAgent_clone_" <<agt->_id;
   std::string uniq_name=sstm.str();
-  ModelPtr mdl=_world->GetModel(uniq_name);	
+  ModelPtr mdl=_world->ModelByName(uniq_name);
 #ifdef USE_ACTOR
   auto _actor = boost::dynamic_pointer_cast<physics::Actor>(mdl);
-  
+
   if(_actor==nullptr) {
-    std::cout<<"did not get actor\n";  
+    std::cout<<"did not get actor\n";
     return false;
   }
 #else
@@ -251,15 +251,15 @@ bool MengePlugin::updateAgent(const Agents::BaseAgent* agt)
     std::cout<<"did not get actor\n";
     return false;
   }
-#endif 
+#endif
 
-  math::Pose pose;
+  ignition::math::Pose3d pose;
 
   // Compute the yaw orientation
-  ignition::math::Angle yaw = atan2(agt->_orient.y(),agt->_orient.x()); 
+  ignition::math::Angle yaw = atan2(agt->_orient.y(),agt->_orient.x());
   yaw.Normalize();
-  
-  
+
+
   // Distance traveled is used to coordinate motion with the walking
   // animation
  // double distanceTraveled = (pose.Pos() -
@@ -277,7 +277,7 @@ bool MengePlugin::updateAgent(const Agents::BaseAgent* agt)
 
   //_actor->SetScriptTime(_actor->ScriptTime()+this->dt);
 	return true;
-	
+
 }
 void MengePlugin::updateAgents()
 {
@@ -298,7 +298,7 @@ void MengePlugin::controlActorAgents()
             std::stringstream sstm;
             sstm << "MengeAgent_clone_" <<agt->_id;
             std::string uniq_name=sstm.str();
-            ModelPtr mdl=_world->GetModel(uniq_name);       
+            ModelPtr mdl=_world->ModelByName(uniq_name);
             ActorPtr _actor = boost::dynamic_pointer_cast<physics::Actor>(mdl);
             if(_actor==nullptr){
                  std::cerr<<"something weird happened, actor for "<< uniq_name<<" is null\n";
@@ -310,22 +310,22 @@ void MengePlugin::controlActorAgents()
 }
 void MengePlugin::updateGoals()
 {
-    ModelPtr mdl=_world->GetModel("quadrotor");
+    ModelPtr mdl=_world->ModelByName("quadrotor");
     if(mdl==nullptr||SimulatorDBEntry::_fsm==0) return;
     Menge::BFSM::GoalSet* gs=SimulatorDBEntry::_fsm->getGoalSet(99);
-    if(gs==0) 
+    if(gs==0)
     {
         std::cerr<<"did not get goal set 99\n";
         return;
     }
-    const math::Pose & pose=mdl->GetWorldPose();
+    const ignition::math::Pose3d & pose=mdl->WorldPose();
     //!TODO set different pos for different goals
     for(size_t i=0;i<gs->size();i++)
     {
         Menge::BFSM::Goal* g=gs->getIthGoal(i);
         Menge::BFSM::CircleGoal* cg=dynamic_cast<Menge::BFSM::CircleGoal*>(g);
         if(!cg) continue;
-        cg->setCenter((float)pose.pos.x, (float)pose.pos.y);
+        cg->setCenter((float)pose.Pos().X(), (float)pose.Pos().Y());
     }
 }
 void MengePlugin::simUpdate(float simTime)
@@ -346,7 +346,7 @@ bool MengePlugin::modelsInserted()
         std::stringstream sstm;
         sstm << "MengeAgent_clone_" <<agt->_id;
         std::string uniq_name=sstm.str();
-	    ModelPtr mdl=_world->GetModel(uniq_name);
+	    ModelPtr mdl=_world->ModelByName(uniq_name);
 	    if(mdl==nullptr) {
             std::cout<<"NULL POINTER"<<std::endl;
             return false;
@@ -359,18 +359,18 @@ bool MengePlugin::modelsInserted()
 // Called by the world update start event
 void MengePlugin::OnUpdate(const common::UpdateInfo & _info) {
 	if(!agentsSynced)
-	{	
+	{
             std::cout<<"syncing at sim time:"<<_info.simTime.Double()<<std::endl;
             agentsSynced = modelsInserted();
             if(agentsSynced){
-                  std::cout<<"agents synced and using physics engine:"<<_world->GetPhysicsEngine()->GetType()<<std::endl;
+                  std::cout<<"agents synced and using physics engine:"<<_world->Physics()->GetType()<<std::endl;
                   simStartTime = _info.simTime.Float()+simDelayPerAgent*_simulator->getNumAgents();
 #ifdef USE_ACTOR
                   controlActorAgents();
 #endif
                   updateAgents();
 	     }
-		
+
 	}else if(_info.simTime.Double()>=simStartTime){
             this->dt = (_info.simTime - this->lastUpdate).Double();
             if(this->dt<_simulator->getTimeStep()) return;
